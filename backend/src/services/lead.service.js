@@ -173,6 +173,7 @@ class LeadService {
                 toCheck,
                 synced,
                 pending: verified - synced,
+                syncInterval: parseInt(process.env.CRM_SYNC_INTERVAL) || 1,
                 lastSyncedLead: lastSyncedLead ? {
                     name: lastSyncedLead.name,
                     at: lastSyncedLead.updatedAt

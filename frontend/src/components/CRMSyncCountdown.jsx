@@ -10,13 +10,23 @@ import { RefreshCw, UserCheck, Clock } from 'lucide-react';
  */
 const CRMSyncCountdown = () => {
   const queryClient = useQueryClient();
-  const [timeLeft, setTimeLeft] = useState(60);
-
+  
   // Fetch stats using react-query to keep it in sync with other components
   const { data } = useQuery({
     queryKey: ['stats'],
     queryFn: () => leadAPI.getStats(),
   });
+
+  const stats = data?.data;
+  const syncIntervalMinutes = stats?.syncInterval || 1;
+  const syncIntervalSeconds = syncIntervalMinutes * 60;
+  
+  const [timeLeft, setTimeLeft] = useState(syncIntervalSeconds);
+
+  useEffect(() => {
+    // If interval changes from backend, reset timer
+    setTimeLeft(syncIntervalSeconds);
+  }, [syncIntervalSeconds]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -24,14 +34,14 @@ const CRMSyncCountdown = () => {
         if (prev <= 1) {
           // Invalidate queries to trigger refresh across the app
           refreshData();
-          return 60;
+          return syncIntervalSeconds;
         }
         return prev - 1;
       });
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [syncIntervalSeconds]);
 
   const refreshData = async () => {
     // Invalidate all relevant queries
@@ -39,8 +49,12 @@ const CRMSyncCountdown = () => {
     queryClient.invalidateQueries({ queryKey: ['leads'] });
   };
 
-  const stats = data?.data;
   const lastUser = stats?.lastSyncedLead;
+
+  // Format time display (e.g., 02:45)
+  const minutes = Math.floor(timeLeft / 60);
+  const seconds = timeLeft % 60;
+  const timeDisplay = `${minutes < 10 ? `0${minutes}` : minutes}:${seconds < 10 ? `0${seconds}` : seconds}`;
 
   return (
     <Card className="overflow-hidden border-primary/20 bg-primary/5 backdrop-blur-md shadow-xl">
@@ -62,14 +76,14 @@ const CRMSyncCountdown = () => {
                   strokeWidth="4"
                   className="text-primary transition-all duration-1000 ease-linear"
                   strokeDasharray={175.93}
-                  strokeDashoffset={175.93 - (175.93 * timeLeft) / 60}
+                  strokeDashoffset={175.93 - (175.93 * timeLeft) / syncIntervalSeconds}
                 />
               </svg>
             </div>
             <div>
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">Next CRM Sync In</p>
               <h3 className="text-3xl font-black font-mono text-primary">
-                00:{timeLeft < 10 ? `0${timeLeft}` : timeLeft}
+                {timeDisplay}
               </h3>
             </div>
           </div>
