@@ -20,12 +20,16 @@ class NationalizeService {
      */
     async predictNationality(name) {
         try {
+            logger.info(`Predicting nationality for: ${name}`);
             const response = await axios.get(this.baseURL, {
                 params: { name: name.trim() },
-                timeout: 10000, // 10 second timeout
+                timeout: 15000, // Increased to 15 seconds for production stability
             });
 
             const data = response.data;
+
+            // Log raw response for debugging in Render
+            logger.debug(`API Response for ${name}:`, JSON.stringify(data));
 
             // Handle case where no predictions are returned
             if (!data.country || data.country.length === 0) {
@@ -50,7 +54,11 @@ class NationalizeService {
                 probability: mostLikely.probability,
             };
         } catch (error) {
-            logger.error(`Error predicting nationality for ${name}:`, error);
+            const errorMsg = error.response ? 
+                `API Error (${error.response.status}): ${JSON.stringify(error.response.data)}` : 
+                `Network/Timeout Error: ${error.message}`;
+            
+            logger.error(`Error predicting nationality for ${name}: ${errorMsg}`);
 
             // Return default values on error to prevent batch failure
             return {
@@ -58,7 +66,7 @@ class NationalizeService {
                 country: 'ERROR',
                 countryName: 'Error',
                 probability: 0,
-                error: error.message,
+                errorMessage: errorMsg, // Adding more detail for debugging
             };
         }
     }
