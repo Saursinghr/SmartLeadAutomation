@@ -113,7 +113,7 @@ const getHealthStatus = () => ({
     message: 'Smart Lead Automation API is running',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    database: database.isConnected() ? 'connected' : 'disconnected',
+    
     environment: process.env.NODE_ENV || 'development',
     version: '1.0.0'
 });
