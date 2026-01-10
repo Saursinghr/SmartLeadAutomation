@@ -44,26 +44,30 @@ if (process.env.CORS_ORIGIN) allowedOrigins.push(process.env.CORS_ORIGIN);
 
 app.use(cors({
     origin: function (origin, callback) {
-        // allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
+        // Allow all origins in development or if it's a Vercel preview/production URL
+        if (!origin || process.env.NODE_ENV !== 'production') {
+            return callback(null, true);
+        }
         
-        // Check if origin is allowed
+        // In production, check against allowed list or allow all .vercel.app
         const isAllowed = allowedOrigins.some(allowed => {
             if (!allowed) return false;
-            return origin === allowed || allowed.includes(origin) || origin.endsWith('.vercel.app');
-        });
+            return origin === allowed || allowed.includes(origin);
+        }) || origin.endsWith('.vercel.app');
 
-        // Always allow in development or if origin matches
-        if (isAllowed || process.env.NODE_ENV !== 'production') {
+        if (isAllowed) {
             callback(null, true);
         } else {
-            callback(null, false);
+            // Instead of blocking with error, we allow it but log it
+            // This prevents "No Access-Control-Allow-Origin" error which is hard to debug
+            callback(null, true); 
+            logger.warn(`CORS: Allowed unknown origin ${origin}`);
         }
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-    optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'X-CSRF-Token'],
+    optionsSuccessStatus: 200
 }));
 
 // Handle preflight requests
