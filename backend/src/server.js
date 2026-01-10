@@ -30,17 +30,28 @@ app.use(helmet());
 // CORS configuration
 const allowedOrigins = [
     'http://localhost:5173',
-    'https://smartleadautomation-1.onrender.com'
-];
+    'https://smartleadautomation-1.onrender.com',
+    process.env.FRONTEND_URL,
+].filter(Boolean);
 
 app.use(cors({
     origin: function (origin, callback) {
         // allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) === -1) {
+        
+        // Check if origin is allowed
+        const isAllowed = allowedOrigins.some(allowed => {
+            if (!allowed) return false;
+            // Exact match or matches a subdomain/pattern if needed
+            return origin === allowed || allowed.includes(origin);
+        });
+
+        if (!isAllowed && process.env.NODE_ENV === 'production') {
+            logger.warn(`Blocked by CORS: ${origin}`);
             const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
             return callback(new Error(msg), false);
         }
+        
         return callback(null, true);
     },
     credentials: true,
