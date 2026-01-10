@@ -32,6 +32,13 @@ router.post(
 );
 
 /**
+ * @route   GET /api/leads/sync
+ * @desc    Manually trigger CRM sync (useful for Vercel Cron Jobs)
+ * @access  Public (Should be protected in production)
+ */
+router.get('/sync', leadController.syncCRM);
+
+/**
  * @route   GET /api/leads
  * @desc    Get all leads with optional filtering
  * @access  Public

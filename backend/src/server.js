@@ -183,7 +183,9 @@ async function startServer() {
     }
 }
 
-// Start the server
-startServer();
+// Start the server only if not running as a serverless function (e.g., on Vercel)
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+    startServer();
+}
 
 export default app;

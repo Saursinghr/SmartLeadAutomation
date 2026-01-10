@@ -49,6 +49,13 @@ class CRMSyncJob {
     }
 
     /**
+     * Execute manual sync (for serverless environments like Vercel)
+     */
+    async executeManual() {
+        return await this.execute();
+    }
+
+    /**
      * Execute the sync process
      * This is the main logic that runs on schedule
      */

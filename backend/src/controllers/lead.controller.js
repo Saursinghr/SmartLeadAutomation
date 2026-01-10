@@ -1,5 +1,6 @@
 import leadService from '../services/lead.service.js';
 import { logger } from '../utils/logger.js';
+import crmSyncJob from '../jobs/crmSync.job.js';
 
 /**
  * Lead Controller
@@ -73,6 +74,25 @@ class LeadController {
             });
         } catch (error) {
             logger.error('Error in processBatch controller:', error);
+            next(error);
+        }
+    }
+
+    /**
+     * Trigger CRM Sync manually
+     * GET /api/leads/sync
+     */
+    async syncCRM(req, res, next) {
+        try {
+            logger.info('Manual CRM Sync triggered via API');
+            const result = await crmSyncJob.executeManual();
+            res.status(200).json({
+                success: true,
+                message: 'CRM Sync completed',
+                data: result
+            });
+        } catch (error) {
+            logger.error('Error in manual syncCRM controller:', error);
             next(error);
         }
     }
