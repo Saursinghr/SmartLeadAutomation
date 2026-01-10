@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/server.js"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/leads/sync",
+      "schedule": "0 * * * *"
+    }
+  ]
+}
