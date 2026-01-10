@@ -3,9 +3,15 @@
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/server.js"
+      "destination": "/index.js"
     }
   ],
+  "functions": {
+    "index.js": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  },
   "crons": [
     {
       "path": "/api/leads/sync",

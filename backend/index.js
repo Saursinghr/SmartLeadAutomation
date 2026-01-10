@@ -113,15 +113,13 @@ const getHealthStatus = () => ({
     message: 'Smart Lead Automation API is running',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    
+    database: database.isConnected() ? 'connected' : 'disconnected',
     environment: process.env.NODE_ENV || 'development',
     version: '1.0.0'
 });
 
 app.get('/', (req, res) => {
     res.status(200).json(getHealthStatus());
-    
-    
 });
 
 app.get('/api/health', (req, res) => {
@@ -131,15 +129,14 @@ app.get('/api/health', (req, res) => {
 // API routes
 app.use('/api/leads', leadRoutes);
 
-// Root endpoint
-app.get('/', (req, res) => {
+// Root endpoint (fallback)
+app.get('/api', (req, res) => {
     res.status(200).json({
         success: true,
         message: 'Welcome to Smart Lead Automation API',
         version: '1.0.0',
         endpoints: {
-            health: '/health',
-            apiHealth: '/api/health',
+            health: '/api/health',
             processLeads: 'POST /api/leads/process',
             getLeads: 'GET /api/leads',
             getStats: 'GET /api/leads/stats',
@@ -227,7 +224,6 @@ async function startServer() {
 }
 
 // Start the server only if not running as a serverless function
-// Vercel handles the listening part for us
 const isVercel = process.env.VERCEL === '1' || process.env.NOW_REGION;
 
 if (!isVercel && (process.env.NODE_ENV !== 'production' || !process.env.VERCEL)) {
