@@ -25,14 +25,22 @@ const PORT = process.env.PORT || 5000;
 // ============================================================================
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    contentSecurityPolicy: false, // Disable CSP for API
+}));
 
 // CORS configuration
 const allowedOrigins = [
     'http://localhost:5173',
+    'http://localhost:3000',
     'https://smartleadautomation-1.onrender.com',
-    process.env.FRONTEND_URL,
+    'https://smart-lead-automation-zeta.vercel.app',
+    'https://smart-lead-automation-frontend.vercel.app', // Adding a likely frontend URL
 ].filter(Boolean);
+
+if (process.env.FRONTEND_URL) allowedOrigins.push(process.env.FRONTEND_URL);
+if (process.env.CORS_ORIGIN) allowedOrigins.push(process.env.CORS_ORIGIN);
 
 app.use(cors({
     origin: function (origin, callback) {
@@ -42,26 +50,45 @@ app.use(cors({
         // Check if origin is allowed
         const isAllowed = allowedOrigins.some(allowed => {
             if (!allowed) return false;
-            // Exact match or matches a subdomain/pattern if needed
-            return origin === allowed || allowed.includes(origin);
+            return origin === allowed || allowed.includes(origin) || origin.endsWith('.vercel.app');
         });
 
-        if (!isAllowed && process.env.NODE_ENV === 'production') {
-            logger.warn(`Blocked by CORS: ${origin}`);
-            const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-            return callback(new Error(msg), false);
+        // Always allow in development or if origin matches
+        if (isAllowed || process.env.NODE_ENV !== 'production') {
+            callback(null, true);
+        } else {
+            callback(null, false);
         }
-        
-        return callback(null, true);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 }));
+
+// Handle preflight requests
+app.options('*', cors());
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Database connection middleware for serverless environments
+app.use(async (req, res, next) => {
+    try {
+        if (!database.isConnected()) {
+            await database.connect();
+        }
+        next();
+    } catch (error) {
+        logger.error('Database connection error in middleware:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Database connection failed',
+            message: process.env.NODE_ENV === 'development' ? error.message : 'Internal Server Error'
+        });
+    }
+});
 
 // Compression middleware
 app.use(compression());
@@ -183,9 +210,17 @@ async function startServer() {
     }
 }
 
-// Start the server only if not running as a serverless function (e.g., on Vercel)
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+// Start the server only if not running as a serverless function
+// Vercel handles the listening part for us
+const isVercel = process.env.VERCEL === '1' || process.env.NOW_REGION;
+
+if (!isVercel && (process.env.NODE_ENV !== 'production' || !process.env.VERCEL)) {
     startServer();
+}
+
+// Ensure database is connected even if startServer isn't called
+if (isVercel) {
+    database.connect().catch(err => logger.error('Vercel DB connection error:', err));
 }
 
 export default app;
