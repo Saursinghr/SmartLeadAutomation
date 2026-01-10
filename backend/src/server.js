@@ -107,14 +107,23 @@ app.use((req, res, next) => {
 // Routes
 // ============================================================================
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-    res.status(200).json({
-        success: true,
-        message: 'Smart Lead Automation API is running',
-        timestamp: new Date().toISOString(),
-        database: database.isConnected() ? 'connected' : 'disconnected',
-    });
+// Health check endpoints
+const getHealthStatus = () => ({
+    success: true,
+    message: 'Smart Lead Automation API is running',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    database: database.isConnected() ? 'connected' : 'disconnected',
+    environment: process.env.NODE_ENV || 'development',
+    version: '1.0.0'
+});
+
+app.get('/', (req, res) => {
+    res.status(200).json(getHealthStatus());
+});
+
+app.get('/api/health', (req, res) => {
+    res.status(200).json(getHealthStatus());
 });
 
 // API routes
@@ -128,6 +137,7 @@ app.get('/', (req, res) => {
         version: '1.0.0',
         endpoints: {
             health: '/health',
+            apiHealth: '/api/health',
             processLeads: 'POST /api/leads/process',
             getLeads: 'GET /api/leads',
             getStats: 'GET /api/leads/stats',
