@@ -121,6 +121,7 @@ const getHealthStatus = () => ({
 app.get('/', (req, res) => {
     res.status(200).json(getHealthStatus());
     
+    
 });
 
 app.get('/api/health', (req, res) => {
