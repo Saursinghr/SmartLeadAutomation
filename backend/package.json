@@ -2,11 +2,11 @@
   "name": "smart-lead-backend",
   "version": "1.0.0",
   "description": "Backend API for Smart Lead Automation System - VR Automations Developer Test",
-  "main": "src/server.js",
+  "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "node --watch src/server.js",
+    "start": "node server.js",
+    "dev": "node --watch server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [

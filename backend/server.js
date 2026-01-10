@@ -5,16 +5,16 @@ import compression from 'compression';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import database from './config/database.js';
-import leadRoutes from './routes/lead.routes.js';
-import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
-import { logger } from './utils/logger.js';
-import crmSyncJob from './jobs/crmSync.job.js';
+import database from './src/config/database.js';
+import leadRoutes from './src/routes/lead.routes.js';
+import { errorHandler, notFoundHandler } from './src/middleware/errorHandler.js';
+import { logger } from './src/utils/logger.js';
+import crmSyncJob from './src/jobs/crmSync.job.js';
 
 // Load environment variables
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 // Create Express app
 const app = express();
@@ -120,6 +120,7 @@ const getHealthStatus = () => ({
 
 app.get('/', (req, res) => {
     res.status(200).json(getHealthStatus());
+    
 });
 
 app.get('/api/health', (req, res) => {
